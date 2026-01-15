@@ -1,0 +1,24 @@
+# Secrets (중요: 설정 파일 제외)
+**/application.properties
+**/application-*.properties
+**/application.yml
+**/application-*.yml
+
+# Java / Maven Build
+target/
+*.class
+*.log
+*.jar
+*.war
+
+# IDE Settings
+.vscode/
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+
+# OS specific
+.DS_Store
+Thumbs.db

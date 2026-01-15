@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+    <header th:fragment="header" class="sticky top-0 z-50 w-full bg-[#1c2127]/90 backdrop-blur-md border-b border-gray-800">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                
+                <div class="flex items-center gap-4">
+                    <!-- 로고 -->
+                    <a th:href="@{/}" class="flex items-center transition-transform hover:scale-105 active:scale-95">
+                        <img th:src="@{https://cdn.dak.gg/tft/images2/gnb/family/ico-tft.svg}" 
+                            alt="TFT 홈"
+                            class="h-8 w-auto">
+                        <span class="ml-3 text-lg font-black tracking-tighter italic text-white">
+                            TFT<span class="text-yellow-500">.GG</span>
+                        </span>
+                    </a>
+                    
+                    <div class="hidden md:flex ml-10 items-baseline space-x-4">
+                        <a href="#" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">가이드</a>
+                        <a th:href="@{/meta}" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">통계</a>
+                        <a th:href="@{/board}" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">배치툴</a>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <!-- 헤더 검색창 (분리형) -->
+                    <form onsubmit="headerSearch(event)" class="hidden sm:flex items-center gap-2 mr-2">
+                        <!-- 서버 선택 -->
+                        <select id="headerServer" class="bg-[#0f1215] border border-gray-700 rounded px-2 py-1.5 text-xs text-gray-300 focus:border-blue-500 outline-none cursor-pointer">
+                            <option value="kr">KR</option>
+                            <option value="jp">JP</option>
+                            <option value="na">NA</option>
+                        </select>
+                        
+                        <!-- 소환사명 -->
+                        <input type="text" id="headerGameName" 
+                               placeholder="아이디" required
+                               class="bg-[#0f1215] border border-gray-700 rounded px-3 py-1.5 text-xs text-white w-32 focus:border-blue-500 outline-none placeholder-gray-600 transition-all focus:w-40">
+                        
+                        <!-- 태그 -->
+                        <input type="text" id="headerTagLine" 
+                               placeholder="#KR1" required
+                               class="bg-[#0f1215] border border-gray-700 rounded px-2 py-1.5 text-xs text-white w-16 focus:border-blue-500 outline-none placeholder-gray-600 text-center">
+
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded text-xs font-bold transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </button>
+                    </form>
+
+                    <!-- <button class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-1.5 rounded text-xs font-bold transition-colors shadow-lg shadow-blue-900/20">
+                        로그인
+                    </button> -->
+                </div>
+                
+            </div>
+        </nav>
+        <script>
+            function headerSearch(event) {
+                event.preventDefault();
+                const server = document.getElementById('headerServer').value;
+                const name = document.getElementById('headerGameName').value.trim();
+                let tag = document.getElementById('headerTagLine').value.trim();
+                
+                if (!name || !tag) return;
+
+                // 태그에서 # 제거
+                tag = tag.replace('#', '');
+
+                window.location.href = `/summoner/${server}/${encodeURIComponent(name)}/${encodeURIComponent(tag)}`;
+            }
+        </script>
+    </header>
+</body>
+</html>

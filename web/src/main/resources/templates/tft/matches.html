@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --hex-w: 60px; --hex-h: 68px; --hex-my: -16px; --hex-mx: 2px;
+        }
+        body { background-color: #0f1012; color: #fff; font-family: sans-serif; }
+
+        /* 육각형 스타일 */
+        .hex {
+            width: var(--hex-w); height: var(--hex-h);
+            background-color: #2a2e35; margin: 0 var(--hex-mx);
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s; position: relative;
+        }
+        .hex:hover { background-color: #3f444d; transform: scale(1.1); z-index: 10; cursor: pointer; }
+        .hex::before {
+            content: ""; position: absolute; width: 92%; height: 92%;
+            background-color: #1a1c21; clip-path: inherit; z-index: -1;
+        }
+        .hex-row { display: flex; margin-top: var(--hex-my); }
+        .hex-row:first-child { margin-top: 0; }
+        .hex-row.even { transform: translateX(calc((var(--hex-w) + (var(--hex-mx) * 2)) / 2)); }
+
+        /* 시너지/챔피언 아이콘 공통 */
+        .icon-box { background-color: #1a1c21; border: 1px solid #2d3035; border-radius: 4px; }
+    </style>
+</head>
+<body class="p-8">
+
+    <div class="max-w-6xl mx-auto flex flex-col gap-6">
+
+        <div class="flex gap-6 justify-center items-start">
+
+            <div class="w-48 icon-box p-3 flex flex-col gap-2 min-h-[300px]">
+                <p class="text-[11px] text-gray-500 mb-2">시너지 목록</p>
+                <div class="flex items-center gap-2 bg-[#2d3035] p-2 rounded text-xs border-l-4 border-yellow-500">
+                    <div class="w-5 h-5 bg-gray-600 rounded-full"></div> <span>전사 (3)</span>
+                </div>
+                <div class="flex items-center gap-2 bg-[#2d3035] p-2 rounded text-xs border-l-4 border-gray-400">
+                    <div class="w-5 h-5 bg-gray-600 rounded-full"></div> <span>화염 (2)</span>
+                </div>
+                <div class="text-[10px] text-gray-600 mt-4 text-center">기물을 배치하면<br>시너지가 활성화됩니다.</div>
+            </div>
+
+            <div class="icon-box p-10 pt-14 pb-14 shadow-2xl">
+                <div class="hex-row">
+                    <div class="hex" th:each="i : ${#numbers.sequence(1, 7)}"></div>
+                    <div class="hex"></div><div class="hex"></div><div class="hex"></div><div class="hex"></div><div class="hex"></div><div class="hex"></div><div class="hex"></div>
+                </div>
+                <div class="hex-row even">
+                    <div class="hex"></div><div class="hex"></div><div class="hex"></div><div class="hex"></div><div class="hex"></div><div class="hex"></div><div class="hex"></div>
+                </div>
+                <div class="hex-row">
+                    <div class="hex"></div><div class="hex"></div><div class="hex"></div><div class="hex"></div><div class="hex"></div><div class="hex"></div><div class="hex"></div>
+                </div>
+                <div class="hex-row even">
+                    <div class="hex"></div><div class="hex"></div><div class="hex"></div><div class="hex"></div><div class="hex"></div><div class="hex"></div><div class="hex"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="icon-box p-4">
+            <div class="flex justify-between items-center mb-4 border-b border-gray-800 pb-2">
+                <div class="flex gap-4 text-xs">
+                    <span class="text-orange-400 border-b-2 border-orange-400 pb-1 cursor-pointer">가격순</span>
+                    <span class="text-gray-500 cursor-pointer">이름순</span>
+                </div>
+                <input type="text" placeholder="챔피언 검색" class="bg-[#0f1012] border border-gray-700 rounded px-3 py-1 text-xs outline-none focus:border-orange-500">
+            </div>
+
+            <div class="grid grid-cols-10 gap-2">
+                <div th:each="i : ${#numbers.sequence(1, 20)}" class="relative group cursor-pointer">
+                    <div class="w-16 h-16 bg-gray-700 rounded-md overflow-hidden border-2 border-gray-800 group-hover:border-orange-500">
+                        <div class="w-full h-full flex items-center justify-center text-[10px] text-gray-500">Img</div>
+                    </div>
+                    <p class="text-[10px] text-center mt-1 text-gray-400">챔피언</p>
+                </div>
+                <div class="w-16 h-16 bg-blue-900 rounded-md border-2 border-blue-400 opacity-80"></div>
+                <div class="w-16 h-16 bg-purple-900 rounded-md border-2 border-purple-400 opacity-80"></div>
+                <div class="w-16 h-16 bg-orange-900 rounded-md border-2 border-orange-400 opacity-80"></div>
+                <div class="w-16 h-16 bg-gray-700 rounded-md border-2 border-gray-600 opacity-80"></div>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>

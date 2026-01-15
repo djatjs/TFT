@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout.html}">
+<head>
+    <meta charset="UTF-8">
+    <title>TFT Meta Statistics</title>
+</head>
+<body class="bg-[#0f1215] text-white">
+
+<main layout:fragment="content" class="container mx-auto px-4 py-8 max-w-7xl">
+    
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+        <div>
+            <h1 class="text-3xl font-black text-white tracking-tight">메타 통계 (Meta Statistics)</h1>
+            <p class="text-gray-500 mt-1">최근 3일간의 실시간 매치 데이터를 분석한 티어표입니다.</p>
+        </div>
+        <div class="bg-blue-600/10 border border-blue-500/20 px-4 py-2 rounded-lg">
+            <span class="text-blue-400 text-sm font-bold">Data Version: 15.24.1</span>
+        </div>
+    </div>
+
+    <!-- Tier List Table -->
+    <div class="space-y-4">
+        <div th:each="deck : ${decks}" class="bg-[#1c2127] rounded-2xl border border-gray-800 overflow-hidden hover:border-gray-600 transition-all group shadow-xl">
+            <div class="flex flex-col lg:flex-row">
+                
+                <!-- Rank & Tier Section -->
+                <div class="lg:w-24 bg-black/20 flex flex-row lg:flex-col items-center justify-center p-4 gap-3 border-b lg:border-b-0 lg:border-r border-gray-800">
+                    <span class="w-12 h-12 flex items-center justify-center rounded-xl text-xl font-black shadow-2xl"
+                          th:classappend="${deck.tier == 'S'} ? 'bg-gradient-to-br from-yellow-300 to-orange-500 text-white' : 
+                                          (${deck.tier == 'A'} ? 'bg-gradient-to-br from-blue-400 to-indigo-600 text-white' : 
+                                          (${deck.tier == 'B'} ? 'bg-gradient-to-br from-green-400 to-emerald-600 text-white' : 'bg-gray-700 text-gray-400'))"
+                          th:text="${deck.tier}">S</span>
+                    <div class="text-center">
+                        <div class="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Avg Place</div>
+                        <div class="text-lg font-black text-gray-200" th:text="${#numbers.formatDecimal(deck.avgPlacement, 1, 1)}">3.2</div>
+                    </div>
+                </div>
+
+                <!-- Content Section -->
+                <div class="flex-1 p-5">
+                    <div class="flex flex-col xl:flex-row justify-between gap-6">
+                        
+                        <!-- Left Side: Name & Units -->
+                        <div class="flex-1">
+                            <div class="flex items-center gap-3 mb-4">
+                                <!-- <div class="w-10 h-10 bg-gray-900 rounded-lg p-1.5 border border-gray-800 shadow-inner">
+                                    <img th:src="${deck.mainTraitIcon}" class="w-full h-full object-contain filter brightness-125">
+                                </div> -->
+                                <h2 class="text-xl font-black text-gray-100" th:text="${deck.name}">7 Pentakill</h2>
+                            </div>
+
+                            <!-- Units with Items -->
+                            <div class="flex flex-wrap gap-2">
+                                <div th:each="unit : ${deck.coreUnits}" class="relative group/unit">
+                                    <div class="w-14 h-14 rounded-xl border-2 overflow-hidden bg-gray-900 shadow-lg"
+                                         th:classappend="${unit.cost >= 5} ? 'border-yellow-500' : 
+                                                         (${unit.cost == 4} ? 'border-purple-500' : 
+                                                         (${unit.cost == 3} ? 'border-blue-500' : 
+                                                         (${unit.cost == 2} ? 'border-green-500' : 'border-gray-600')))">
+                                        <img th:src="${unit.imgUrl}" class="w-full h-full object-cover object-[90%_50%]">
+                                    </div>
+                                    <!-- Items Overlay -->
+                                    <div class="absolute -bottom-1 left-1/2 -translate-x-1/2 flex gap-0.5 z-10">
+                                        <div th:each="item : ${unit.items}" class="w-4 h-4 rounded-sm border border-black bg-gray-900 overflow-hidden shadow-sm">
+                                            <img th:src="${item.imgUrl}" class="w-full h-full object-cover " th:title="${item.name}">
+                                        </div>
+                                    </div>
+                                    <!-- Tooltip -->
+                                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/unit:block z-50">
+                                        <div class="bg-black text-white text-[10px] px-2 py-1 rounded border border-gray-700 whitespace-nowrap shadow-2xl" th:text="${unit.name}"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Side: Stats & Augments -->
+                        <div class="xl:w-80 flex flex-col gap-4">
+                            <!-- Stats Grid -->
+                            <div class="grid grid-cols-3 gap-2">
+                                <div class="bg-black/30 rounded-lg p-2 text-center border border-gray-800/50">
+                                    <div class="text-[9px] text-gray-500 font-bold uppercase">Win Rate</div>
+                                    <div class="text-sm font-black text-blue-400" th:text="${#numbers.formatDecimal(deck.winRate, 1, 1)} + '%'">15%</div>
+                                </div>
+                                <div class="bg-black/30 rounded-lg p-2 text-center border border-gray-800/50">
+                                    <div class="text-[9px] text-gray-500 font-bold uppercase">Top 4</div>
+                                    <div class="text-sm font-black text-green-400" th:text="${#numbers.formatDecimal(deck.top4Rate, 1, 1)} + '%'">55%</div>
+                                </div>
+                                <div class="bg-black/30 rounded-lg p-2 text-center border border-gray-800/50">
+                                    <div class="text-[9px] text-gray-500 font-bold uppercase">Pick</div>
+                                    <div class="text-sm font-black text-gray-300" th:text="${#numbers.formatDecimal(deck.pickRate, 1, 1)} + '%'">2.5%</div>
+                                </div>
+                            </div>
+
+                            <!-- Key Augments -->
+                            <div>
+                                <div class="text-[10px] text-gray-500 font-bold uppercase mb-2 tracking-widest">Best Augments</div>
+                                <div class="flex gap-2">
+                                    <div th:each="aug : ${deck.keyAugments}" class="w-8 h-8 rounded-lg bg-gray-900 border border-gray-700 overflow-hidden group/aug relative">
+                                        <img th:src="${aug.imgUrl}" class="w-full h-full object-cover" th:title="${aug.name}">
+                                        <!-- Augment Tooltip -->
+                                        <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/aug:block z-50">
+                                            <div class="bg-black text-white text-[10px] px-2 py-1 rounded border border-gray-700 whitespace-nowrap shadow-2xl" th:text="${aug.name}"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- No Data State -->
+        <div th:if="${#lists.isEmpty(decks)}" class="py-20 text-center">
+            <div class="text-6xl mb-4">📊</div>
+            <h3 class="text-xl font-bold text-gray-400">분석된 메타 데이터가 없습니다.</h3>
+            <p class="text-gray-600 mt-2">배치 작업을 통해 최신 데이터를 수집해 주세요.</p>
+        </div>
+    </div>
+</main>
+
+</body>
+</html>
