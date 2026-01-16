@@ -20,6 +20,7 @@ public class HighTierCollectorService {
 
     private final RiotLeagueClient riotLeagueClient;
     private final MatchFetchQueueRepository queueRepository;
+    private final com.tft.batch.repository.LpHistoryRepository lpHistoryRepository;
 
     @Transactional
     public void collectHighTierPlayers() {
@@ -27,21 +28,21 @@ public class HighTierCollectorService {
 
         // 1. Challenger
         try {
-            collectLeague(riotLeagueClient.getChallengerLeague(), 100);
+            collectLeague(riotLeagueClient.getChallengerLeague(), "CHALLENGER", 100);
         } catch (Exception e) {
             log.error("Failed to collect Challenger league: {}", e.getMessage());
         }
 
         // 2. Grandmaster
         try {
-            collectLeague(riotLeagueClient.getGrandmasterLeague(), 80);
+            collectLeague(riotLeagueClient.getGrandmasterLeague(), "GRANDMASTER", 80);
         } catch (Exception e) {
             log.error("Failed to collect Grandmaster league: {}", e.getMessage());
         }
 
         // 3. Master
         try {
-            // collectLeague(riotLeagueClient.getMasterLeague(), 50);
+            // collectLeague(riotLeagueClient.getMasterLeague(), "MASTER", 50);
         } catch (Exception e) {
             log.error("Failed to collect Master league: {}", e.getMessage());
         }
@@ -49,9 +50,9 @@ public class HighTierCollectorService {
         log.info("High Tier player collection finished.");
     }
 
-    private void collectLeague(TftLeagueListDto league, int priority) {
+    private void collectLeague(TftLeagueListDto league, String tierName, int priority) {
         if (league == null || league.getEntries() == null) {
-            log.warn("League data is null or empty.");
+            log.warn("League data is null or empty for {}", tierName);
             return;
         }
 
@@ -61,17 +62,62 @@ public class HighTierCollectorService {
 
         int count = 0;
         for (TftLeagueItemDto entry : league.getEntries()) {
-            if (entry.getPuuid() != null && !queueRepository.existsByMfqId(entry.getPuuid())) {
-                queueRepository.save(MatchFetchQueue.builder()
-                        .mfqId(entry.getPuuid())
-                        .mfqType("SUMMONER")
-                        .mfqStatus("READY")
-                        .mfqPriority(priority)
-                        .mfqUpdatedAt(LocalDateTime.now())
-                        .build());
-                count++;
+            // Case 1: PUUID가 있는 경우 (바로 랭킹 등록 및 매치 수집)
+            if (entry.getPuuid() != null) {
+                if (!queueRepository.existsByMfqId(entry.getPuuid())) {
+                    queueRepository.save(MatchFetchQueue.builder()
+                            .mfqId(entry.getPuuid())
+                            .mfqType("SUMMONER")
+                            .mfqStatus("READY")
+                            .mfqPriority(priority)
+                            .mfqUpdatedAt(LocalDateTime.now())
+                            .build());
+                    count++;
+                }
+                try {
+                    saveLpHistory(entry, tierName);
+                } catch (Exception e) {
+                    log.error("Failed to save LP history for {}: {}", entry.getPuuid(), e.getMessage());
+                }
+            } 
+            // Case 2: PUUID가 없고 SummonerID만 있는 경우 (ID 변환 대기열에 등록)
+            else if (entry.getSummonerId() != null) {
+                if (!queueRepository.existsByMfqId(entry.getSummonerId())) {
+                    queueRepository.save(MatchFetchQueue.builder()
+                            .mfqId(entry.getSummonerId())
+                            .mfqType("SUMMONER_ID") // ID -> PUUID 변환 작업
+                            .mfqStatus("READY")
+                            .mfqPriority(priority)
+                            .mfqUpdatedAt(LocalDateTime.now())
+                            .build());
+                    count++;
+                }
             }
         }
-        log.info("Added {} new players to queue from {}", count, league.getTier());
+        log.info("Added {} new players to queue from {}", count, tierName);
+    }
+
+    private void saveLpHistory(TftLeagueItemDto entry, String tier) {
+        com.tft.batch.model.entity.LpHistory lastRecord = lpHistoryRepository.findTopByPuuidOrderByCreatedAtDesc(entry.getPuuid());
+
+        boolean needUpdate = false;
+        if (lastRecord == null) {
+            needUpdate = true;
+        } else {
+            // 점수나 티어가 바뀌었을 때만 저장
+            if (lastRecord.getLp() != entry.getLeaguePoints() || !lastRecord.getTier().equals(tier)) {
+                needUpdate = true;
+            }
+        }
+
+        if (needUpdate) {
+            lpHistoryRepository.save(com.tft.batch.model.entity.LpHistory.builder()
+                    .puuid(entry.getPuuid())
+                    .tier(tier)
+                    .rank_str(entry.getRank())
+                    .lp(entry.getLeaguePoints())
+                    .createdAt(LocalDateTime.now())
+                    .build());
+        }
     }
 }

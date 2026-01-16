@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/layout.html}">
+<head>
+    <title>TFT Ranking - Challenger & Grandmaster</title>
+</head>
+<body class="bg-[#0f1215] text-white">
+    <main layout:fragment="content" class="container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto">
+            <h1 class="text-3xl font-bold mb-2">랭킹 (Ranking)</h1>
+            <p class="text-gray-400 mb-8">실시간 챌린저 & 그랜드마스터 순위</p>
+
+            <div class="bg-[#1c2127] rounded-lg border border-gray-800 overflow-hidden">
+                <table class="w-full text-left">
+                    <thead class="bg-[#12161b] text-gray-400 text-xs uppercase font-bold">
+                        <tr>
+                            <th class="px-6 py-4 w-16 text-center">#</th>
+                            <th class="px-6 py-4">소환사</th>
+                            <th class="px-6 py-4 text-center">티어</th>
+                            <th class="px-6 py-4 text-center">LP</th>
+                            <th class="px-6 py-4 text-center">승률</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-800">
+                        <tr th:each="player : ${rankingList}" class="hover:bg-white/5 transition-colors group">
+                            <!-- 순위 -->
+                            <td class="px-6 py-4 text-center font-bold text-lg text-gray-500 group-hover:text-white" th:text="${player.rank}">1</td>
+                            
+                            <!-- 소환사 -->
+                            <td class="px-6 py-4">
+                                <a th:href="@{'/summoner/KR/' + ${player.summonerName} + '/' + ${player.tagLine}}" class="flex items-center gap-4 group-hover:text-blue-400 transition-colors">
+                                    <div class="w-10 h-10 rounded-full bg-gray-700 overflow-hidden border border-gray-600">
+                                        <img th:src="${player.profileIconUrl}" class="w-full h-full object-cover">
+                                    </div>
+                                    <div>
+                                        <div class="font-bold" th:text="${player.summonerName}">Summoner Name</div>
+                                        <div class="text-xs text-gray-500" th:text="'#' + ${player.tagLine}">#KR1</div>
+                                    </div>
+                                </a>
+                            </td>
+
+                            <!-- 티어 -->
+                            <td class="px-6 py-4 text-center">
+                                <div class="flex flex-col items-center">
+                                    <img th:src="'https://cdn.metatft.com/file/metatft/ranks/wings_' + ${player.tier.toLowerCase()} + '.png'" 
+                                         class="w-8 h-8 object-contain">
+                                    <span class="text-[10px] font-bold mt-1 text-gray-400" th:text="${player.tier}">CHALLENGER</span>
+                                </div>
+                            </td>
+
+                            <!-- LP -->
+                            <td class="px-6 py-4 text-center">
+                                <span class="font-bold text-blue-400" th:text="${player.lp} + ' LP'">1,200 LP</span>
+                            </td>
+
+                            <!-- 승률 (정보 없으면 - 표시) -->
+                            <td class="px-6 py-4 text-center text-gray-500 text-sm">
+                                <span th:if="${player.winRate > 0}" th:text="${#numbers.formatDecimal(player.winRate, 1, 1)} + '%'"></span>
+                                <span th:unless="${player.winRate > 0}">-</span>
+                            </td>
+                        </tr>
+                        
+                        <!-- 데이터가 없을 때 -->
+                        <tr th:if="${#lists.isEmpty(rankingList)}">
+                            <td colspan="5" class="px-6 py-12 text-center text-gray-500">
+                                현재 수집된 랭킹 데이터가 없습니다.<br>
+                                배치 작업이 완료되면 표시됩니다.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

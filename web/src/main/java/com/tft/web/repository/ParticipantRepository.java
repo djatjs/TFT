@@ -29,4 +29,16 @@ public interface ParticipantRepository extends JpaRepository<Participant, Intege
 
         @org.springframework.data.jpa.repository.Query("SELECT p FROM Participant p WHERE p.paName = :name ORDER BY p.gameInfo.gaDatetime DESC")
         List<Participant> findByPaName(String name);
-    }
+
+    @org.springframework.data.jpa.repository.Query(value = """
+        SELECT pa_puuid as paPuuid, pa_name as paName, pa_tag as paTag, pa_companion_id as paCompanionId
+        FROM (
+            SELECT pa_puuid, pa_name, pa_tag, pa_companion_id,
+                   ROW_NUMBER() OVER (PARTITION BY pa_puuid ORDER BY pa_ga_num DESC) as rn
+            FROM participant
+            WHERE pa_puuid IN :puuids
+        ) t
+        WHERE t.rn = 1
+        """, nativeQuery = true)
+    List<com.tft.web.model.dto.ParticipantSimpleDto> findLatestParticipantsByPuuids(@org.springframework.data.repository.query.Param("puuids") List<String> puuids);
+}

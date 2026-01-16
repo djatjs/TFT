@@ -194,7 +194,17 @@ public  class SummonerServiceImp implements SummonerService{
             // [추가] LP 히스토리 조회 (최근 15개)
             List<com.tft.web.domain.LpHistory> historyList = lpHistoryRepository.findTop15ByPuuidOrderByCreatedAtDesc(puuid);
             java.util.Collections.reverse(historyList); // 시간순 정렬
-            profile.setLpHistory(historyList.stream().map(com.tft.web.domain.LpHistory::getLp).collect(java.util.stream.Collectors.toList()));
+            
+            // [수정] 단순 LP가 아닌 "티어 보정 점수"로 변환하여 그래프가 승급을 반영하도록 수정
+            profile.setLpHistory(historyList.stream()
+                .map(h -> convertTierToTotalLp(h.getTier(), h.getRank_str(), h.getLp()))
+                .collect(java.util.stream.Collectors.toList()));
+            
+            // [추가] 툴팁용 실제 LP 저장
+            profile.setRealLpHistory(historyList.stream()
+                .map(com.tft.web.domain.LpHistory::getLp)
+                .collect(java.util.stream.Collectors.toList()));
+                
             profile.setLpHistoryLabels(historyList.stream()
                 .map(h -> h.getCreatedAt().format(java.time.format.DateTimeFormatter.ofPattern("MM-dd")))
                 .collect(java.util.stream.Collectors.toList()));
@@ -222,6 +232,43 @@ public  class SummonerServiceImp implements SummonerService{
             profile.setSummonerLevel(summoner.getSummonerLevel());
         }
         return profile;
+    }
+
+    private int convertTierToTotalLp(String tier, String rank, int lp) {
+        if (tier == null) return 0;
+        
+        int baseScore = 0;
+        switch (tier) {
+            case "IRON":        baseScore = 0; break;
+            case "BRONZE":      baseScore = 400; break;
+            case "SILVER":      baseScore = 800; break;
+            case "GOLD":        baseScore = 1200; break;
+            case "PLATINUM":    baseScore = 1600; break;
+            case "EMERALD":     baseScore = 2000; break;
+            case "DIAMOND":     baseScore = 2400; break;
+            case "MASTER":      baseScore = 2800; break;
+            case "GRANDMASTER": baseScore = 2800; break; // 마스터 이상은 LP로만 구분
+            case "CHALLENGER":  baseScore = 2800; break;
+            default:            baseScore = 0;
+        }
+
+        // 마스터 이상은 랭크(I, II, III, IV) 개념이 없음
+        if (baseScore >= 2800) {
+            return baseScore + lp;
+        }
+
+        // 랭크 보정 (IV=0, III=100, II=200, I=300)
+        int rankScore = 0;
+        if (rank != null) {
+            switch (rank) {
+                case "IV": rankScore = 0; break;
+                case "III": rankScore = 100; break;
+                case "II": rankScore = 200; break;
+                case "I": rankScore = 300; break;
+            }
+        }
+
+        return baseScore + rankScore + lp;
     }
 
     public RiotAccountDto getAccountByRiotId(String gameName, String tagLine) {

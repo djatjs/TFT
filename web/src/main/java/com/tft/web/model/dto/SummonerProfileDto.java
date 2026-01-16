@@ -35,7 +35,8 @@ public class SummonerProfileDto {
     private int totalCount; // 이건 리그 정보 등에서 가져오거나 큐 정보에서 추산
 
     // [추가] LP 변화 추이 데이터
-    private java.util.List<Integer> lpHistory;
+    private java.util.List<Integer> lpHistory;     // 그래프 Y축용 (환산 점수)
+    private java.util.List<Integer> realLpHistory; // 툴팁 표시용 (실제 LP)
     private java.util.List<String> lpHistoryLabels;
     private java.util.List<String> lpHistoryTiers;
 

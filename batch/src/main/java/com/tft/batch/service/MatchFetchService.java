@@ -25,6 +25,10 @@ public class MatchFetchService {
     private final RiotSummonerClient riotSummonerClient;
     private final MatchDetailSaveService matchDetailSaveService;
     private final GameInfoRepository gameInfoRepository;
+    
+    // [추가] 랭킹 정보 즉시 갱신을 위한 의존성
+    private final com.tft.batch.client.RiotLeagueClient riotLeagueClient;
+    private final com.tft.batch.repository.LpHistoryRepository lpHistoryRepository;
 
     @Transactional
     public void fetchNext() {
@@ -85,14 +89,42 @@ public class MatchFetchService {
         log.info("Resolving SummonerID={} to PUUID", queue.getMfqId());
         TftSummonerDto summoner = riotSummonerClient.getSummonerById(queue.getMfqId());
         if (summoner != null && summoner.getPuuid() != null) {
-            if (!queueRepository.existsByMfqId(summoner.getPuuid())) {
+            String puuid = summoner.getPuuid();
+            
+            // 1. 매치 수집 큐 등록
+            if (!queueRepository.existsByMfqId(puuid)) {
                 queueRepository.save(MatchFetchQueue.builder()
-                        .mfqId(summoner.getPuuid())
+                        .mfqId(puuid)
                         .mfqType("SUMMONER")
                         .mfqStatus("READY")
                         .mfqPriority(queue.getMfqPriority())
                         .mfqUpdatedAt(java.time.LocalDateTime.now())
                         .build());
+            }
+
+            // 2. [추가] 랭킹 정보(LpHistory) 즉시 갱신
+            // (SummonerID로 수집된 유저는 LpHistory가 없으므로 여기서 채워줘야 랭킹에 뜸)
+            try {
+                com.tft.batch.client.dto.TftLeagueEntryDto league = riotLeagueClient.getTftLeagueByPuuid(puuid);
+                if (league != null) {
+                    com.tft.batch.model.entity.LpHistory lastRecord = lpHistoryRepository.findTopByPuuidOrderByCreatedAtDesc(puuid);
+                    boolean needUpdate = (lastRecord == null) 
+                            || (lastRecord.getLp() != league.getLeaguePoints()) 
+                            || (!lastRecord.getTier().equals(league.getTier()));
+
+                    if (needUpdate) {
+                        lpHistoryRepository.save(com.tft.batch.model.entity.LpHistory.builder()
+                                .puuid(puuid)
+                                .tier(league.getTier())
+                                .rank_str(league.getRank())
+                                .lp(league.getLeaguePoints())
+                                .createdAt(java.time.LocalDateTime.now())
+                                .build());
+                        log.info("Initialized LpHistory for resolved PUUID: {}", puuid);
+                    }
+                }
+            } catch (Exception e) {
+                log.error("Failed to fetch/save League info for resolved PUUID {}: {}", puuid, e.getMessage());
             }
         }
     }

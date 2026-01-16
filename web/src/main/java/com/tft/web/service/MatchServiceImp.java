@@ -212,6 +212,14 @@ public class MatchServiceImp implements MatchService {
                 .sorted(Comparator.comparingInt(ParticipantDto::getPlacement))
                 .collect(Collectors.toList());
 
+        // [추가] 더블업 모드(1160)일 경우 등수 재조정 (1~8등 -> 1,1,2,2,3,3,4,4)
+        if (info.getQueue_id() == 1160 && allParticipants.size() == 8) {
+            for (int i = 0; i < 8; i++) {
+                int doubleUpRank = (i / 2) + 1; // 0,1->1 | 2,3->2 | 4,5->3 | 6,7->4
+                allParticipants.get(i).setPlacement(doubleUpRank);
+            }
+        }
+
         ParticipantDto myParticipant = null;
 
         // 2. 모든 참가자에 대해 이미지 매핑 및 가공 수행

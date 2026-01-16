@@ -10,6 +10,9 @@ public class TftLeagueItemDto {
     @JsonProperty("puuid")
     private String puuid;
     
+    @JsonProperty("summonerId")
+    private String summonerId;
+
     @JsonProperty("leaguePoints")
     private int leaguePoints;
     

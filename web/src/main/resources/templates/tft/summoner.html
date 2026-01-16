@@ -205,15 +205,19 @@
 
 						<!-- 상세보기 영역 (1~8등 정렬) -->
 						<div th:id="'detail-' + ${iter.index}" class="hidden border-t border-gray-800 bg-black/20 p-4 space-y-1">
-							<div th:each="p : ${match.info.participants}" 
+							<div th:each="p, pIter : ${match.info.participants}" 
 								 class="flex items-center gap-4 p-2 rounded hover:bg-white/5 transition-colors text-[11px]"
-								 th:classappend="${p.puuid == profile.puuid} ? 'bg-blue-500/10 border border-blue-500/20' : ''">
+								 th:classappend="(${p.puuid == profile.puuid} ? 'bg-blue-500/10 border border-blue-500/20' : '') + 
+												(${match.info.queue_id == 1160 and pIter.index % 2 == 1 and !pIter.last} ? ' mb-3 border-b border-gray-800/50 pb-3' : '')">
 								
-								<div class="w-8 font-black text-center" th:text="'#' + ${p.placement}" 
-									 th:classappend="${p.placement <= 4} ? 'text-blue-400' : 'text-gray-500'"></div>
+								<!-- 등수 표시 -->
+								<div class="w-8 font-black text-center text-lg" th:text="'#' + ${p.placement}" 
+									 th:classappend="${p.placement == 1} ? 'text-[#1fb27c]' : 
+													(${match.info.queue_id == 1160} ? (${p.placement == 2} ? 'text-[#3d6ad6]' : 'text-gray-500') : 
+													(${p.placement <= 4} ? 'text-[#3d6ad6]' : 'text-gray-500'))"></div>
 								
 								<div class="w-32 flex items-center gap-2">
-									<div class="w-5 h-5 bg-gray-800 rounded-full overflow-hidden border border-gray-700">
+									<div class="w-5 h-5 bg-gray-800 rounded-full overflow-hidden border border-gray-700 shrink-0">
 										<img th:if="${p.companion != null}" th:src="${p.companion.companionImg}" class="w-full h-full scale-125">
 									</div>
 									<div class="truncate font-bold text-gray-300" th:text="${p.riotIdGameName}">소환사명</div>
@@ -221,7 +225,7 @@
 								
 								<div class="flex-1 flex flex-wrap gap-2">
 									<div th:each="u : ${p.units}" class="flex flex-col items-center">
-										<div class="relative group">
+										<div class="relative group w-8 h-8">
 											<!-- 유닛 이미지 -->
 											<div class="w-8 h-8 rounded border overflow-hidden"
 												 th:classappend="${u.cost >= 6} ? 'border-yellow-500' : 
@@ -299,6 +303,7 @@
 			/*<![CDATA[*/
 			const rankCounts = /*[[${profile.rankCounts}]]*/ [0,0,0,0,0,0,0,0];
 			const lpHistory = /*[[${profile.lpHistory}]]*/ [];
+			const realLps = /*[[${profile.realLpHistory}]]*/ []; // [추가] 툴팁용 실제 LP
 			const lpLabels = /*[[${profile.lpHistoryLabels}]]*/ [];
 			const lpTiers = /*[[${profile.lpHistoryTiers}]]*/ [];
 
@@ -367,20 +372,20 @@
 								},
 								label: function(context) {
 									const tier = lpTiers[context.dataIndex] || '';
-									return tier + ' (' + context.parsed.y + ' LP)';
+									// [수정] 그래프 값(환산점수) 대신 실제 LP 표시
+									const realLp = realLps[context.dataIndex] !== undefined ? realLps[context.dataIndex] : context.parsed.y;
+									return tier + ' (' + realLp + ' LP)';
 								}
 							}
 						}
 					},
 					scales: {
 						y: { 
-							suggestedMin: minLp - 10,
-							suggestedMax: maxLp + 10,
+							suggestedMin: minLp - 50,
+							suggestedMax: maxLp + 50,
 							grid: { color: '#2d353f', drawTicks: false },
 							ticks: { 
-								color: '#6b7280', 
-								font: { size: 9 },
-								stepSize: 20
+								display: false // [수정] 환산 점수 노출 방지를 위해 Y축 라벨 숨김
 							}
 						},
 						x: { 
